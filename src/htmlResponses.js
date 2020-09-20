@@ -1,7 +1,9 @@
 const fs = require('fs');
-const index = fs.readFileSync(`${__dirname}/../client/client.html`);
 
-//fill in response to send back
+const index = fs.readFileSync(`${__dirname}/../client/client.html`);
+const css = fs.readFileSync(`${__dirname}/../client/style.css`);
+
+// fill in response to send back
 const respond = (request, response, content, type) => {
   // set status code (200 success) and content type
   response.writeHead(200, { 'Content-Type': type });
@@ -11,11 +13,15 @@ const respond = (request, response, content, type) => {
   response.end();
 };
 
-// function to handle the index page
 const getIndex = (request, response) => {
   respond(request, response, index, 'text/html');
 };
 
+const getCSS = (request, response) => {
+  respond(request, response, css, 'text/css');
+};
+
 module.exports = {
   getIndex,
+  getCSS,
 };
