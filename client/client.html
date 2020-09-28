@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Our simple HTTP server</title>
+  <title>Cute Weather App</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
+  <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
@@ -42,25 +43,25 @@
         
     };
 
-    const sendPost = (e, nameForm) => {
+    const sendPost = (e, cityForm) => {
       //grab the forms action (url) and method
-      const nameAction = nameForm.getAttribute('action');
-      const nameMethod = nameForm.getAttribute('method');
+      const cityAction = cityForm.getAttribute('action');
+      const cityMethod = cityForm.getAttribute('method');
       
       //grab the forms to check user input
-      const nameField = nameForm.querySelector('#nameField');
-      const ageField = nameForm.querySelector('#ageField');
+      const cityField = cityForm.querySelector('#cityField');
+      const stateField = cityForm.querySelector('#stateField');
       
       //new Ajax request
       const xhr = new XMLHttpRequest();
-      xhr.open(nameMethod, nameAction);
+      xhr.open(cityMethod, cityAction);
       
       xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
       xhr.setRequestHeader ('Accept', 'application/json');
       
       xhr.onload = () => handleResponse(xhr);
         
-      const formData = `name=${nameField.value}&age=${ageField.value}`;
+      const formData = `city=${cityField.value}&state=${stateField.value}`;
       xhr.send(formData);
     
       e.preventDefault();
@@ -79,7 +80,7 @@
       if(method == 'get') {
         xhr.onload = () => handleResponse(xhr, true);
       } else {
-        //There are no body responses in a head request
+        //no body responses in head request
         xhr.onload = () => handleResponse(xhr, false);
       }
       
@@ -89,46 +90,145 @@
       return false;
     };
 
+    function dataLoaded(e){
+		let xhr = e.target;
+		//console.log(xhr.responseText);
+
+		let obj = JSON.parse(xhr.responseText);
+        console.log(obj);
+
+		/*if(!obj.data || obj.data.length == 0){
+			document.querySelector("#status").innerHTML = "<b>No results found for '" + displayTerm + "'</b>";
+			reutrn;
+		}
+
+		let results = obj.data;
+		console.log("results.length = " + results.length);
+		let bigString = "<p><i>Here are " + results.length + " results for '" + displayTerm + "'</i></p>";
+
+		for(let i = 0; i<results.length; i++){
+			let result = results[i];
+
+			let smallURL = result.images.fixed_width_small.url;
+			let rating = result.rating.toUpperCase();
+			if(!smallURL) smallURL = "images/no-image-found.png";
+
+			let url = result.url;
+            
+			let line = `<div class='result'><img src='${smallURL}' title='${result.id}' />`;
+			line += `<span><a target='_blank' href='${url}'>View on Giphy</a>`;
+			line += '<p>Rating: ' + rating + '</p></span></div>';
+
+			bigString += line;
+		}
+		*/
+        
+		document.querySelector("#content").innerHTML = obj.name +  ", " + obj.sys.country + " " + obj.weather[0].main + " " + obj.weather[0].description;
+		document.querySelector("#status").innerHTML = "<b>Success!</b>";
+	};
+
+	function dataError(e){
+		console.log("An error occured");
+        document.querySelector("#status").innerHTML = "<b>Whoops, that didn't work. :(</b>";
+	};
+        
+    function getData(url){
+		let xhr = new XMLHttpRequest();
+
+		xhr.onload = dataLoaded;
+		xhr.onerror = dataError;
+		xhr.open("GET",url);
+		xhr.send();
+    };
+
+    function searchButtonClicked(){
+		console.log("searchButtonClicked() called");
+
+        const WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?id="
+        let cityID = "2172797";
+        const API_KEY = "e665851ace3c4e548c23959a9ad7ec46";
+        let url = WEATHER_URL;
+        url +=  cityID + "&APPID=" + API_KEY;
+
+        //let term = document.querySelector("#searchterm").value;
+        //displayTerm = term;
+        //term = term.trim();
+        //term = encodeURIComponent(term);
+        //if(term.length < 1) return;
+        //url += "&q=" + term;
+        //let limit = document.querySelector("#limit").value;
+        //url += "&limit=" + limit;
+
+        document.querySelector("#status").innerHTML = "<b>Searching for '" + "PLACEHOLDER" + "'</b>";
+        //11
+        console.log(url);
+		//12
+		getData(url);
+	};
+
     const init = () => {
-      const nameForm = document.querySelector('#nameForm');
+      const cityForm = document.querySelector('#cityForm');
       const userForm = document.querySelector('#userForm');
+      const searchButton = document.querySelector("#search");   
         
       //create handlers
-      const getUsers = (e) => requestUpdate(e, userForm);
-      const addUser = (e) => sendPost(e, nameForm);
+      const getProfiles = (e) => requestUpdate(e, userForm);
+      const addProfile = (e) => sendPost(e, cityForm);
+      const search = (e) => searchButtonClicked();
       
       //attach submit events (click or enter)
-      nameForm.addEventListener('submit', addUser);
-      userForm.addEventListener('submit', getUsers);
+      cityForm.addEventListener('submit', addProfile);
+      userForm.addEventListener('submit', getProfiles);
+      searchButton.addEventListener('click', search)
     };
 
     window.onload = init;
-
   </script>
+  
+  
 </head>
 <body>
+ <header>
+	<h1>Cute Weather App</h1>
+</header>
+ 
+    <div class="widgets">
+	    Search City -> 
+<!--	<input id="searchterm" type="text" size="20" maxlength="20" autofocus value="cats" />-->
+    </div>
+    <div class="widgets">
+	    <button type="button" id="search" class="green">Preview Your Weather<br />:-)</button>
+    </div>
+    <div id="status">Ready to generate!</div>
+    <hr>
+
+    <h2>Your weather:</h2>
+    <div id="content">
+	    <p>No data yet!</p>
+    </div>
+ 
   <section id="top">
-    <h3>POST Status Code Tests</h3>
-    <form id="nameForm" action="/addUser" method="post">
-      <label for="name">Name: </label>
-      <input id="nameField" type="text" name="name" />
-      <label for="age">Age: </label>
-      <input id="ageField" type="number" name="age" min="0" max="100" step="1"/>
-      <input type="submit" value="Add User" />
+    <form id="cityForm" action="/addProfile" method="post">
+      <label for="city">City: </label>
+      <input id="cityField" type="text" name="city" />
+      <label for="state">State: </label>
+      <input id="stateField" type="number" name="state" min="0" max="100" step="1"/>
+      <input type="submit" value="Add Profile" />
     </form>
-    <form id="userForm" action="/getUsers" method="get">
+    <form id="userForm" action="/getProfiles" method="get">
       <select id='urlField'>
-        <option value='/getUsers'>/getUsers</option>
+        <option value='/getProfiles'>/getProfiles</option>
         <option value='/notReal'>/notReal</option>
       </select>
       <select id="methodSelect">
         <option value="get">GET</option>
         <option value="head">HEAD</option>
       </select>
-      <input type="submit" value="Get User" />
+      <input type="submit" value="Get Profile" />
     </form>
   </section>
   <section id="content">
   </section>
+  
 </body>
 </html>

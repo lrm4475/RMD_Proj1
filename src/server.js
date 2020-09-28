@@ -14,14 +14,14 @@ const urlStruct = {
   GET: {
     '/': htmlHandler.getIndex,
     '/style.css': htmlHandler.getCSS,
-    '/getUsers': jsonHandler.getUsers,
-    '/updateUser': jsonHandler.updateUser,
+    '/getProfiles': jsonHandler.getProfiles,
+    '/updateProfile': jsonHandler.updateProfile,
     '/notReal': jsonHandler.notFound,
     index: htmlHandler.getIndex,
     notFound: jsonHandler.notFound,
   },
   HEAD: {
-    '/getUsers': jsonHandler.getUsersMeta,
+    '/getProfiles': jsonHandler.getProfilesMeta,
     '/notReal': jsonHandler.notFoundMeta,
     notFound: jsonHandler.notFoundMeta,
   },
@@ -29,8 +29,8 @@ const urlStruct = {
 
 // handle POST requests
 const handlePost = (request, response, parsedUrl) => {
-  // if post is to /addUser
-  if (parsedUrl.pathname === '/addUser') {
+  // if post is to /addProfile
+  if (parsedUrl.pathname === '/addProfile') {
     const res = response;
 
     // byte stream to be reassembled
@@ -48,23 +48,21 @@ const handlePost = (request, response, parsedUrl) => {
     });
 
     request.on('end', () => {
-      // combine our byte array and convert to string
+      // combine our byte array & convert to string
       const bodyString = Buffer.concat(body).toString();
-      // Parse the string into obj
+      // Parse string into obj
       const bodyParams = query.parse(bodyString);
-      // pass to addUser
-      jsonHandler.addUser(request, res, bodyParams);
+      // pass to addProfile
+      jsonHandler.addProfile(request, res, bodyParams);
     });
   }
 };
 
 const onRequest = (request, response) => {
-  // parse url into individual parts
-  // returns an object of url parts by name
+  // parse url into individual parts, returns obj of url parts by name
   const parsedUrl = url.parse(request.url);
 
   // check if method was POST, otherwise assume GET
-  // for the sake of this example
   if (request.method === 'POST') {
     handlePost(request, response, parsedUrl);
   } else if (urlStruct[request.method][parsedUrl.pathname]) {

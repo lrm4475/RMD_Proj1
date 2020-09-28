@@ -1,5 +1,5 @@
 // will get cleared by Heroku every so often
-const users = {};
+const profiles = {};
 
 // respond function
 const respondJSON = (request, response, status, object) => {
@@ -28,30 +28,30 @@ const respondJSONMeta = (request, response, status) => {
 };
 
 // should calculate a 200
-const getUsers = (request, response) => {
+const getProfiles = (request, response) => {
   // json object to send
   const responseJSON = {
-    users,
+    profiles,
   };
   // return 200 with message
   return respondJSON(request, response, 200, responseJSON);
 };
 // get meta info about user object
-const getUsersMeta = (request, response) => {
+const getProfilesMeta = (request, response) => {
   // return 200 without message, just the meta data
   respondJSONMeta(request, response, 200);
 };
 
 // function to add a user from a POST body
-const addUser = (request, response, body) => {
+const addProfile = (request, response, body) => {
   // default json message
   const responseJSON = {
-    message: 'Name and age are both required.',
+    message: 'City and state are both required.',
   };
 
   // check to make sure we have both fields
   // if not, 400 badRequest
-  if (!body.name || !body.age) {
+  if (!body.city || !body.state) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
   }
@@ -59,15 +59,15 @@ const addUser = (request, response, body) => {
   let responseCode = 201;
 
   // if name already exists
-  if (users[body.name]) {
+  if (profiles[body.city]) {
     responseCode = 204;
   } else {
-    users[body.name] = {};
+    profiles[body.city] = {};
   }
 
   // add/update fields
-  users[body.name].name = body.name;
-  users[body.name].age = body.age;
+  profiles[body.city].city = body.city;
+  profiles[body.city].state = body.state;
 
   if (responseCode === 201) {
     responseJSON.message = 'Created Successfully';
@@ -77,14 +77,14 @@ const addUser = (request, response, body) => {
   return respondJSONMeta(request, response, responseCode);
 };
 
-const updateUser = (request, response) => {
+const updateProfile = (request, response) => {
   // change to make to user
   // This is just a dummy object for example
-  const newUser = {
+  const newProfile = {
     createdAt: Date.now(),
   };
 
-  users[newUser.createdAt] = newUser;
+  profiles[newProfile.createdAt] = newUser;
 
   // return a 201 created status
   return respondJSON(request, response, 201, newUser);
@@ -108,10 +108,10 @@ const notFoundMeta = (request, response) => {
 };
 
 module.exports = {
-  getUsers,
-  getUsersMeta,
-  addUser,
-  updateUser,
+  getProfiles,
+  getProfilesMeta,
+  addProfile,
+  updateProfile,
   notFound,
   notFoundMeta,
 };
