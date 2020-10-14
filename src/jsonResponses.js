@@ -75,7 +75,7 @@ const updateLocation = (request, response) => {
   };
 
   // change to make
-  users[newLocation.createdAt] = newUser;
+  users[newUser.createdAt] = newUser;
 
   // return 201 - created
   return respondJSON(request, response, 201, newUser);
