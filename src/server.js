@@ -14,14 +14,14 @@ const urlStruct = {
   GET: {
     '/': htmlHandler.getIndex,
     '/style.css': htmlHandler.getCSS,
-    '/getProfiles': jsonHandler.getProfiles,
-    '/updateProfile': jsonHandler.updateProfile,
+    '/getLocations': jsonHandler.getLocations,
+    '/updateLocation': jsonHandler.updateLocation,
     '/notReal': jsonHandler.notFound,
     index: htmlHandler.getIndex,
     notFound: jsonHandler.notFound,
   },
   HEAD: {
-    '/getProfiles': jsonHandler.getProfilesMeta,
+    '/getLocations': jsonHandler.getLocationsMeta,
     '/notReal': jsonHandler.notFoundMeta,
     notFound: jsonHandler.notFoundMeta,
   },
@@ -29,8 +29,8 @@ const urlStruct = {
 
 // handle POST requests
 const handlePost = (request, response, parsedUrl) => {
-  // if post is to /addProfile
-  if (parsedUrl.pathname === '/addProfile') {
+  // if post is to /addLocation
+  if (parsedUrl.pathname === '/addLocation') {
     const res = response;
 
     // byte stream to be reassembled
@@ -38,7 +38,6 @@ const handlePost = (request, response, parsedUrl) => {
 
     // in case of error
     request.on('error', (err) => {
-      console.dir(err);
       res.statusCode = 400;
       res.end();
     });
@@ -53,7 +52,7 @@ const handlePost = (request, response, parsedUrl) => {
       // Parse string into obj
       const bodyParams = query.parse(bodyString);
       // pass to addProfile
-      jsonHandler.addProfile(request, res, bodyParams);
+      jsonHandler.addLocation(request, res, bodyParams);
     });
   }
 };

@@ -1,88 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Cute Weather App</title>
-  <link rel="stylesheet" type="text/css" href="/style.css">
-  <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
+  <title>urWeather</title>
   
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cute+Font&display=swap" rel="stylesheet">
+  <!--  AJAX-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+  
   <script type="text/babel">
 
+    const infoForm = document.querySelector('#infoForm');
+    const nameField = infoForm.querySelector('#nameField');
+    const cityField = infoForm.querySelector('#cityField');
+    const stateField = infoForm.querySelector('#stateField');
+
+    var lastName;
+    var currName;
+    var locations = [];
+    var currCity;
+
+    //msg to user according to response
     const handleResponse = (xhr, parseResponse) => {
       const content = document.querySelector('#content');
       switch(xhr.status) {
-        case 200: //success
-          content.innerHTML = `<b>Success</b>`;
+        case 200: //success - green
+          content.innerHTML = `<b>User: Success</b>`;
           break;
-        case 201: //created
-          content.innerHTML = '<b>Create</b>';
+        case 201: //created - green
+          content.innerHTML = '<b>User: Created</b>';
           break;
-        case 204: //updated
-          content.innerHTML = '<b>Updated (No Content)</b>';
+        case 204: //updated - green
+          content.innerHTML = '<b>Location added</b>';
           return;
-        case 400: //bad request
+        case 400: //bad request - red
           content.innerHTML = `<b>Bad Request</b>`;
           break;
-        case 404: //not found
+        case 404: //not found - red
           content.innerHTML = `<b>Resource Not Found</b>`;
           break;
-        default: //any other
-          content.innerHTML = `Error code not implemented by client.`;
+        default: //any other - red
+          content.innerHTML = `Error: Code not implemented by client`;
           break;
       }
 
       //if we are expecting a response body (not in a head request)
       if(parseResponse) {
         const obj = JSON.parse(xhr.response);
-        console.log(obj);
+          
         //print to screen
-        content.innerHTML += `<p>${xhr.response}</p>`;
+        if(!obj.message){
+            if(obj.users.name.locations && !locations.includes(currCity)){
+                console.log("Just did city check: " + locations.includes(currCity));
+                printLocations();
+                locations.push(currCity);
+            }
+            content.innerHTML += `<p>${xhr.response}</p>`;
+        }
+        else{
+            content.innerHTML += `<p>${obj.message}</p>`;
+        }
       } else { 
         content.innerHTML += '<p>Meta Data Recieved</p>';
       }
         
     };
 
+    
+    
+    //pushes user data
     const sendPost = (e, cityForm) => {
+        if(currName){
+            lastName = currName;   
+        }
+      //requestUpdate(e);
       //grab the forms action (url) and method
-      const cityAction = cityForm.getAttribute('action');
-      const cityMethod = cityForm.getAttribute('method');
-      
-      //grab the forms to check user input
-      const cityField = cityForm.querySelector('#cityField');
-      const stateField = cityForm.querySelector('#stateField');
+      const cityAction = infoForm.getAttribute('action'); //ADD / GET Location
+      const cityMethod = infoForm.getAttribute('method'); //GET / HEAD
       
       //new Ajax request
       const xhr = new XMLHttpRequest();
       xhr.open(cityMethod, cityAction);
-      
       xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
       xhr.setRequestHeader ('Accept', 'application/json');
       
-      xhr.onload = () => handleResponse(xhr);
+      xhr.onload = () => handleResponse(xhr, true);
         
-      const formData = `city=${cityField.value}&state=${stateField.value}`;
+      //sends user info
+      currName = nameField.value;
+      const formData = `name=${nameField.value}&city=${cityField.value}`;
       xhr.send(formData);
     
       e.preventDefault();
       return false;
     };
+    
+    
+     const requestUpdate = (e) => {
 
-     const requestUpdate = (e, userForm) => {
-      const url = userForm.querySelector('#urlField').value;
-      const method = userForm.querySelector('#methodSelect').value;
-      
       const xhr = new XMLHttpRequest();
-      xhr.open(method, url);
+      xhr.open('get', '/getLocations');
 
       xhr.setRequestHeader('Accept', 'application/json');
-
-      if(method == 'get') {
-        xhr.onload = () => handleResponse(xhr, true);
-      } else {
-        //no body responses in head request
-        xhr.onload = () => handleResponse(xhr, false);
-      }
+         
+      xhr.onload = () => handleResponse(xhr, true);
       
       xhr.send();
       
@@ -90,48 +113,54 @@
       return false;
     };
 
+    function clearBox(elementID){
+        if(document.getElementById(elementID)){
+            document.getElementById(elementID).innerHTML = "";
+        }
+    }
+
     function dataLoaded(e){
 		let xhr = e.target;
-		//console.log(xhr.responseText);
-
 		let obj = JSON.parse(xhr.responseText);
-        console.log(obj);
+        let resultsDiv = document.querySelector("#resultsDiv");
 
-		/*if(!obj.data || obj.data.length == 0){
-			document.querySelector("#status").innerHTML = "<b>No results found for '" + displayTerm + "'</b>";
-			reutrn;
-		}
-
-		let results = obj.data;
-		console.log("results.length = " + results.length);
-		let bigString = "<p><i>Here are " + results.length + " results for '" + displayTerm + "'</i></p>";
-
-		for(let i = 0; i<results.length; i++){
-			let result = results[i];
-
-			let smallURL = result.images.fixed_width_small.url;
-			let rating = result.rating.toUpperCase();
-			if(!smallURL) smallURL = "images/no-image-found.png";
-
-			let url = result.url;
-            
-			let line = `<div class='result'><img src='${smallURL}' title='${result.id}' />`;
-			line += `<span><a target='_blank' href='${url}'>View on Giphy</a>`;
-			line += '<p>Rating: ' + rating + '</p></span></div>';
-
-			bigString += line;
-		}
-		*/
+        if(xhr.status == 404){
+            document.querySelector("#content").innerHTML = "Whoops, that didn't work. Please check spelling and try again.";
+            document.querySelector("#status").innerHTML = "<b>Search conducted, no locations found.</b>";
+        }
         
-		document.querySelector("#content").innerHTML = obj.name +  ", " + obj.sys.country + " " + obj.weather[0].main + " " + obj.weather[0].description;
-		document.querySelector("#status").innerHTML = "<b>Success!</b>";
+        let country = obj.sys.country;
+        if(country!="US"){
+            document.querySelector("#content").innerHTML = "Uh oh, it seems like that's not in the US. Please try another location. :)";
+            document.querySelector("#status").innerHTML = "<b>No locations found in the United States.</b>";
+        }
+            else{
+                if(currName != lastName){
+                clearBox(resultsDiv);
+                } 
+               //add img correlating to weather
+              let weatherIcon = obj.weather[0].icon;
+              let iconURL = "http://openweathermap.org/img/wn/" + weatherIcon + "@2x.png";
+              let displayIcon = document.createElement("img");
+              displayIcon.setAttribute("src", iconURL);
+              var divInDiv = document.createElement("div");
+              var txt = document.createTextNode(obj.name +  ", " + country + " " + obj.weather[0].main + " (" + obj.weather[0].description + ")");
+              divInDiv.appendChild(txt);
+              resultsDiv.appendChild(divInDiv);
+              //text for weather result
+              //contentDiv.innerHTML = obj.name +  ", " + country + " " + obj.weather[0].main + " (" + obj.weather[0].description + ")";
+              resultsDiv.appendChild(displayIcon); 
+              //update status - green
+              document.querySelector("#status").innerHTML = "<b>Search success!</b>"; 
+            }
 	};
-
+    
+    //if request doesn't work
 	function dataError(e){
-		console.log("An error occured");
+        //update status - red
         document.querySelector("#status").innerHTML = "<b>Whoops, that didn't work. :(</b>";
 	};
-        
+    
     function getData(url){
 		let xhr = new XMLHttpRequest();
 
@@ -141,94 +170,88 @@
 		xhr.send();
     };
 
-    function searchButtonClicked(){
-		console.log("searchButtonClicked() called");
-
-        const WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?id="
-        let cityID = "2172797";
+    function printLocations(){    
+        //Weather API Setup
+        const WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?q="
+        let city = cityField.value;
+        currCity = city;
+        //let state = stateField.value;
         const API_KEY = "e665851ace3c4e548c23959a9ad7ec46";
         let url = WEATHER_URL;
-        url +=  cityID + "&APPID=" + API_KEY;
-
-        //let term = document.querySelector("#searchterm").value;
-        //displayTerm = term;
-        //term = term.trim();
-        //term = encodeURIComponent(term);
-        //if(term.length < 1) return;
-        //url += "&q=" + term;
-        //let limit = document.querySelector("#limit").value;
-        //url += "&limit=" + limit;
-
-        document.querySelector("#status").innerHTML = "<b>Searching for '" + "PLACEHOLDER" + "'</b>";
-        //11
-        console.log(url);
-		//12
+        url +=  city + "," + "US" + "&appid=" + API_KEY;
+        
+        //update status
+        document.querySelector("#status").innerHTML = "<b>Searching for weather conditions in '" + city + ".'</b>";
+        
+        //make xhr request
 		getData(url);
 	};
 
     const init = () => {
-      const cityForm = document.querySelector('#cityForm');
-      const userForm = document.querySelector('#userForm');
+      const infoForm = document.querySelector('#infoForm');
+      const getLocationForm = document.querySelector('#getLocationForm');
       const searchButton = document.querySelector("#search");   
         
       //create handlers
-      const getProfiles = (e) => requestUpdate(e, userForm);
-      const addProfile = (e) => sendPost(e, cityForm);
-      const search = (e) => searchButtonClicked();
+      const getLocations = (e) => requestUpdate(e);
+      const addLocation = (e) => sendPost(e, infoForm);
+      const search = (e) => printLocations();
       
-      //attach submit events (click or enter)
-      cityForm.addEventListener('submit', addProfile);
-      userForm.addEventListener('submit', getProfiles);
-      searchButton.addEventListener('click', search)
+      //attach submit events (click/enter)
+      infoForm.addEventListener('submit', addLocation);
+      //getLocationForm.addEventListener('submit', getLocations);
+      searchButton.addEventListener('click', search);
     };
 
     window.onload = init;
+
   </script>
-  
   
 </head>
 <body>
- <header>
-	<h1>Cute Weather App</h1>
-</header>
- 
-    <div class="widgets">
-	    Search City -> 
-<!--	<input id="searchterm" type="text" size="20" maxlength="20" autofocus value="cats" />-->
-    </div>
-    <div class="widgets">
-	    <button type="button" id="search" class="green">Preview Your Weather<br />:-)</button>
-    </div>
-    <div id="status">Ready to generate!</div>
-    <hr>
+     <header class="row">
+	    <h1>urWeather</h1>
+    </header>
+    
+    <div class="row justify-content-center hi" id="UI">
+           <div class="col-md justify-content-center content hi" id="myBox">
+                <b>Your weather:</b>
+                <p id="content">No data yet!</p>
+                <div id="resultsDiv">
 
-    <h2>Your weather:</h2>
-    <div id="content">
-	    <p>No data yet!</p>
+                </div>
+                <b id="status">Status: Ready to search! </b>
+        </div>
+    
+         <div class="col-md justify-content-center hi" id="container">
+                <section class="greyBG" id="userForm">
+                  <form class="greyBG" id="infoForm" action="/addLocation" method="post">
+                      <label class="greyBG" for="name">Username: </label>
+                      <input class="greyBG" id="nameField" type="text" name="name" />
+                      <hr>
+                      <label class="greyBG" for="city">City: </label>
+                      <input class="greyBG" id="cityField" type="text" name="city" />
+                      <hr>
+                      <input class="greyBG btn btn-outline-dark" type="submit" value="Add Location" />
+                      <hr>
+                  </form>
+                </section>
+        </div>
     </div>
- 
-  <section id="top">
-    <form id="cityForm" action="/addProfile" method="post">
-      <label for="city">City: </label>
-      <input id="cityField" type="text" name="city" />
-      <label for="state">State: </label>
-      <input id="stateField" type="number" name="state" min="0" max="100" step="1"/>
-      <input type="submit" value="Add Profile" />
-    </form>
-    <form id="userForm" action="/getProfiles" method="get">
-      <select id='urlField'>
-        <option value='/getProfiles'>/getProfiles</option>
-        <option value='/notReal'>/notReal</option>
-      </select>
-      <select id="methodSelect">
-        <option value="get">GET</option>
-        <option value="head">HEAD</option>
-      </select>
-      <input type="submit" value="Get Profile" />
-    </form>
-  </section>
-  <section id="content">
-  </section>
-  
+
+      <div class="row justify-content-center">
+          <div class="widgets">
+                <b>Display Locations ->&nbsp;&nbsp;</b>
+                <button type="button" id="search" class="btn btn-outline-dark">Preview Your Weather<br/> CLICK HERE <br />&#9786</button>
+          </div>
+      </div>
+  <!--<hr>-->
+    <footer>
+      <div class="container">
+       <div class="row justify-content-center">
+           <h4>Lea Melendez 2020</h4>
+       </div>
+       </div>
+    </footer>
 </body>
 </html>

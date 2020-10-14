@@ -1,117 +1,106 @@
 // will get cleared by Heroku every so often
-const profiles = {};
+const users = {};
 
-// respond function
+// respond function (get)
 const respondJSON = (request, response, status, object) => {
-  // object for our headers
-  // Content-Type for json
   const headers = {
     'Content-Type': 'application/json',
   };
-
-  // send response with json object
+  // send response w/ json obj
   response.writeHead(status, headers);
   response.write(JSON.stringify(object));
   response.end();
 };
-// function to respond without json body
+// respond function (head)
 const respondJSONMeta = (request, response, status) => {
-  // object for our headers
-  // Content-Type for json
   const headers = {
     'Content-Type': 'application/json',
   };
-
-  // send response without json object, just headers
+  // send response w/o json object, just headers
   response.writeHead(status, headers);
   response.end();
 };
 
-// should calculate a 200
-const getProfiles = (request, response) => {
-  // json object to send
+// get saved locations - should calculate success - 200
+const getLocations = (request, response) => {
+  // obj to send to response funct
   const responseJSON = {
-    profiles,
+    users,
   };
-  // return 200 with message
   return respondJSON(request, response, 200, responseJSON);
 };
-// get meta info about user object
-const getProfilesMeta = (request, response) => {
-  // return 200 without message, just the meta data
+const getLocationsMeta = (request, response) => {
+  // return 200 w/o message, just meta data
   respondJSONMeta(request, response, 200);
 };
 
-// function to add a user from a POST body
-const addProfile = (request, response, body) => {
-  // default json message
+// add user from POST body
+const addLocation = (request, response, body) => {
+  // check to make sure we have both fieldsq1
   const responseJSON = {
-    message: 'City and state are both required.',
+    // default json msg
+    message: 'Oops! All fields are required. Please try again.',
   };
-
-  // check to make sure we have both fields
-  // if not, 400 badRequest
-  if (!body.city || !body.state) {
+  // if not, 400 - badRequest
+  if (!body.name || !body.city) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
   }
-  // 201 created
+
+  // 201 - created
   let responseCode = 201;
 
   // if name already exists
-  if (profiles[body.city]) {
+  if (users[body.name]) {
     responseCode = 204;
   } else {
-    profiles[body.city] = {};
+    users[body.name] = {};
+    users[body.name].locations = [];
   }
-
   // add/update fields
-  profiles[body.city].city = body.city;
-  profiles[body.city].state = body.state;
+  users[body.name].locations.push(`City: ${body.city}`);
+  // users[body.name].locations.push("State: " + body.state);
 
   if (responseCode === 201) {
-    responseJSON.message = 'Created Successfully';
+    responseJSON.message = 'User created Successfully';
     return respondJSON(request, response, responseCode, responseJSON);
   }
-  // 204 has an empty payload, just a success
+  // 204 - empty payload, just a success
   return respondJSONMeta(request, response, responseCode);
 };
 
-const updateProfile = (request, response) => {
-  // change to make to user
-  // This is just a dummy object for example
-  const newProfile = {
+const updateLocation = (request, response) => {
+  const newUser = {
     createdAt: Date.now(),
   };
 
-  profiles[newProfile.createdAt] = newUser;
+  // change to make
+  users[newLocation.createdAt] = newUser;
 
-  // return a 201 created status
+  // return 201 - created
   return respondJSON(request, response, 201, newUser);
 };
 
-// function for 404 not found requests with message
+// 404 - notFound
 const notFound = (request, response) => {
-  // create error message for response
+  // error msg and id
   const responseJSON = {
     message: 'The page you are looking for was not found.',
     id: 'notFound',
   };
-
-  // return a 404 with an error message
+  // return 404 w/error msg
   respondJSON(request, response, 404, responseJSON);
 };
-// function for 404 not found without message
+// 404 - notFound (head)
 const notFoundMeta = (request, response) => {
-  // return a 404 without an error message
   respondJSONMeta(request, response, 404);
 };
 
 module.exports = {
-  getProfiles,
-  getProfilesMeta,
-  addProfile,
-  updateProfile,
+  getLocations,
+  getLocationsMeta,
+  addLocation,
+  updateLocation,
   notFound,
   notFoundMeta,
 };
